@@ -12,6 +12,8 @@ import { AnnouncementsPage } from './components/AnnouncementsPage';
 import SubjectPage from './components/SubjectPage';
 import Loader from './components/Loader';
 import { Analytics } from '@vercel/analytics/react';
+import { BackgroundMusicProvider } from './components/BackgroundMusicContext';
+import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 
 function HomePage({ language }: { language: string }) {
   return (
@@ -39,15 +41,37 @@ export default function App() {
     if (sessionStorage.getItem('isInitialLoadComplete')) {
       setIsLoading(false);
     } else {
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-        sessionStorage.setItem('isInitialLoadComplete', 'true');
-      }, 7000);
+      // Check if user has already set music preference
+      const musicPreference = localStorage.getItem('music_pref_v2');
 
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('popstate', handlePopState);
-      };
+      if (musicPreference) {
+        // User has already made a choice, proceed with normal loader
+        const timer = setTimeout(() => {
+          setIsLoading(false);
+          sessionStorage.setItem('isInitialLoadComplete', 'true');
+        }, 7000);
+
+        return () => {
+          clearTimeout(timer);
+          window.removeEventListener('popstate', handlePopState);
+        };
+      } else {
+        // First visit: wait for music preference to be set
+        const checkMusicPreference = setInterval(() => {
+          const pref = localStorage.getItem('music_pref_v2');
+          if (pref) {
+            // User made a choice, dismiss loader
+            clearInterval(checkMusicPreference);
+            setIsLoading(false);
+            sessionStorage.setItem('isInitialLoadComplete', 'true');
+          }
+        }, 100);
+
+        return () => {
+          clearInterval(checkMusicPreference);
+          window.removeEventListener('popstate', handlePopState);
+        };
+      }
     }
 
     return () => {
@@ -61,7 +85,7 @@ export default function App() {
       return <LoginPage language={language} />;
     }
     if (path === '/announcements') {
-      return <AnnouncementsPage onBack={() => {}} language={language} />;
+      return <AnnouncementsPage onBack={() => { }} language={language} />;
     }
     if (path.startsWith('/subject/')) {
       return (
@@ -73,11 +97,11 @@ export default function App() {
     }
     return <HomePage language={language} />;
   };
-  
+
 
 
   return (
-    <>
+    <BackgroundMusicProvider>
       {isLoading && <Loader isLoading={isLoading} />}
       <div className={`bg-background text-foreground font-sans transition-opacity duration-500 ${!isLoading ? 'opacity-100' : 'opacity-0'}`}>
         <Header
@@ -92,6 +116,7 @@ export default function App() {
         <Footer language={language} />
         <Analytics />
       </div>
-    </>
+      <BackgroundMusicPlayer />
+    </BackgroundMusicProvider>
   );
 }

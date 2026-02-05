@@ -198,7 +198,7 @@ export function HeroSection({ language }: HeroSectionProps) {
             className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto"
           >
             {[
-              { number: "1600+", label: t.Students },
+              { number: "1300+", label: t.Students },
               { number: "25+", label: t.Teachers },
               { number: "8+", label: t['Years of Excellence'] }
             ].map((stat, index) => (
